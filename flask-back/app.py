@@ -1,10 +1,15 @@
+import os
 from datetime import datetime
 
+from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from database import init_db, get_db, get_user, create_user, add_group, get_groups, add_task, get_tasks, update_task, \
-    delete_task, get_group_by_id
+    delete_task, get_group_by_id, Task
+
+load_dotenv()
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
 init_db()
 
 
@@ -56,10 +61,12 @@ def add_task_route():
         start_time = datetime.now()
     if end_time:
         end_time = datetime.fromisoformat(end_time)
-
+    if start_time < datetime.now():
+        raise ValueError('Start time must be in the future')
     db = next(get_db())
     task = add_task(db, task_text, group_id, start_time, end_time, custom_status)
-    return jsonify({'name': task.task, 'done': task.done, 'start_time': task.start_time, 'end_time': task.end_time, 'custom_status': task.custom_status})
+    return jsonify({'task': task.task, 'done': task.done, 'start_time': task.start_time, 'end_time': task.end_time,
+                    'custom_status': task.custom_status})
 
 
 @app.route('/get_tasks', methods=['POST'])
@@ -101,6 +108,34 @@ def delete_task_route():
     db = next(get_db())
     delete_task(db, task_id, group_id)
     return jsonify({'status': 'Task deleted'})
+
+
+@app.route('/tasks_due', methods=['GET'])
+def tasks_due():
+    db = next(get_db())
+    tasks = Task.get_due_tasks(db)
+    if len(tasks) is None or len(tasks) == 0:
+        return jsonify({})
+    tasks_due = [
+        {
+            'user_id': task.group.user.telegram_id,
+            'description': task.task
+        }
+        for task in tasks
+    ]
+    return jsonify(tasks_due)
+
+
+@app.route('/update_task', methods=['POST'])
+def update_task_status():
+    data = request.get_json()
+    task_id = data.get('task_id')
+    db = next(get_db())
+    task = update_task(db, task_id, done=True)
+    if task:
+        return jsonify({'status': 'success'})
+    else:
+        return jsonify({'status': 'failure', 'message': 'Task not found'}), 404
 
 
 if __name__ == '__main__':

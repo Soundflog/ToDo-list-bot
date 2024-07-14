@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, ForeignKey, DateTime
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 from dotenv import load_dotenv
 import os
 import datetime
@@ -12,6 +12,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+db_session = scoped_session(SessionLocal)
 
 
 class User(Base):
@@ -40,6 +41,11 @@ class Task(Base):
     start_time = Column(DateTime, nullable=True)
     end_time = Column(DateTime, nullable=True)
     custom_status = Column(String, nullable=True)
+
+    @classmethod
+    def get_due_tasks(cls, db):
+        now = datetime.datetime.now()
+        return db.query(cls).filter(cls.start_time <= now, cls.done is True).all()
 
 
 def init_db():
@@ -88,7 +94,6 @@ def add_task(db, task, group_id, start_time=None, end_time=None, custom_status=N
     db.commit()
     db.refresh(db_task)
     return db_task
-
 
 def get_tasks(db, group_id):
     return (db.query(Task, TaskGroup)
