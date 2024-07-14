@@ -1,6 +1,7 @@
-from aiogram.types import InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.types.web_app_info import WebAppInfo
+from typing import Union
+
+from aiogram.types import InlineKeyboardButton, KeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
 
 def start_keyboard():
@@ -10,6 +11,11 @@ def start_keyboard():
         InlineKeyboardButton(text="Перейти", callback_data='groups_list')
     )
     keyboard.adjust(1)
+    # replyKeyboard = ReplyKeyboardBuilder()
+    # replyKeyboard.add(
+    #     KeyboardButton(text=f"Создать задачу"),
+    #     KeyboardButton(text=f"Назад")
+    # )
     return keyboard.as_markup()
 
 
@@ -36,10 +42,7 @@ def tasks_list_keyboard(tasks_list: list):
             )
     keyboard.add(
         InlineKeyboardButton(text=f"Создать", callback_data=f"task_add"),
+        InlineKeyboardButton(text=f"Назад", callback_data=f"groups_list")
     )
-    keyboard.adjust(1)
-    keyboard.add(
-        InlineKeyboardButton(text=f"Назад", callback_data=f"groups_list"),
-        InlineKeyboardButton(text=f"Меню", callback_data=f"group_menu"),
-    ).adjust(2)
+    keyboard.adjust(2)
     return keyboard.as_markup()

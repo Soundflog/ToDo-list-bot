@@ -2,6 +2,7 @@ from aiogram.fsm.state import StatesGroup, State
 
 
 class TaskStates(StatesGroup):
+    group = State()
     write = State()
 
     async def clear(self) -> None:

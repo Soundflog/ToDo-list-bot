@@ -3,6 +3,7 @@ from typing import Union
 
 import requests
 from aiogram.enums import ParseMode
+from aiogram.fsm.context import FSMContext
 
 from dotenv import load_dotenv
 from aiogram import types, Router
@@ -10,6 +11,7 @@ from aiogram.filters import Command
 
 from bot.handler.request import divide_event_request
 from bot.keyboards import start_keyboard, groups_list_keyboard, tasks_list_keyboard
+from bot.state.Task import TaskStates
 
 load_dotenv()
 WEBAPP_URL = os.getenv("WEBAPP_URL")
@@ -27,8 +29,6 @@ async def send_welcome(message: types.Message):
     )
 
 
-
-
 @router.message(Command('list'))
 @router.callback_query(lambda call: call.data.startswith('groups_list'))
 async def list_groups(event: Union[types.Message, types.CallbackQuery]):
@@ -42,13 +42,14 @@ async def list_groups(event: Union[types.Message, types.CallbackQuery]):
         await event.message.answer(
             parse_mode=ParseMode.HTML,
             text=response_text,
-            reply_markup=groups_list_keyboard(groups))
+            reply_markup=groups_list_keyboard(groups)
+        )
     else:
         await event.answer("No groups found.")
 
 
 @router.callback_query(lambda call: call.data.startswith('group_'))
-async def list_task(event: types.CallbackQuery):
+async def list_task(event: types.CallbackQuery, state: FSMContext):
     split_callback_data = event.data.split('_')
     group_id = split_callback_data[1]
     response = await divide_event_request('get_tasks', message=event, json={'group_id': int(group_id)})
@@ -58,12 +59,16 @@ async def list_task(event: types.CallbackQuery):
         answer_response_text = '\n'.join([f"{task['task']}" for task in tasks[:5]])
         response_text = f"Ваши задачи в группе {group['name']}:\n"
         response_text += '\n'.join([f"{task['task']} -- {task['done']} -- {task['end_time']}" for task in tasks])
-        await event.answer(answer_response_text)
+        await event.answer(text=answer_response_text)
         await event.message.edit_text(
             inline_message_id=event.inline_message_id,
             parse_mode=ParseMode.HTML,
             text=response_text,
-            reply_markup=tasks_list_keyboard(tasks))
+            reply_markup=tasks_list_keyboard(tasks)
+        )
+        await state.set_state(TaskStates.group)
+        update_data_state = {'group_id': group_id}
+        await state.update_data(update_data_state)
     else:
         await event.answer("No tasks found.")
 
