@@ -10,7 +10,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-from bot.handler import handlers, task
+from bot.handler import handlers, task_handler, group_handler
 
 load_dotenv()
 FLASK_URL = os.getenv("FLASK_URL")
@@ -42,7 +42,8 @@ async def main():
     bot = Bot(token=str(API_TOKEN))
     scheduler = AsyncIOScheduler()
     dp.include_router(handlers.router)
-    dp.include_router(task.router)
+    dp.include_router(task_handler.router)
+    dp.include_router(group_handler.router)
     # сюда импортируйте ваш собственный роутер
     # dp.message.middleware(ThrottlingMiddleware())
     try:

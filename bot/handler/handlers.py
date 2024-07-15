@@ -6,11 +6,12 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 
 from dotenv import load_dotenv
-from aiogram import types, Router
+from aiogram import types, Router, Bot, F
 from aiogram.filters import Command
 
 from bot.handler.request import divide_event_request
-from bot.keyboards import start_keyboard, groups_list_keyboard, tasks_list_keyboard
+from bot.handler.usebale_handler import print_tasks_list, print_groups_list, back_to_task_list
+from bot.keyboards import start_keyboard, groups_list_keyboard, tasks_list_keyboard, menu_reply_keyboard
 from bot.state.Task import TaskStates
 
 load_dotenv()
@@ -24,7 +25,13 @@ router = Router()
 @router.callback_query(lambda call: call.data.startswith('start_menu'))
 async def send_welcome(message: types.Message):
     await message.reply(
-        "Hi! I'm your To-Do List bot. Use me to manage your tasks.",
+        text=f"Привет, {message.from_user.first_name}!\nДобро пожаловать в самый крутой проект.\n"
+             f"<b>ToDo List Список задач</b>\n",
+        parse_mode=ParseMode.HTML,
+        reply_markup=menu_reply_keyboard()
+    )
+    await message.answer(
+        "Доступные функции:\n",
         reply_markup=start_keyboard()
     )
 
@@ -34,43 +41,18 @@ async def send_welcome(message: types.Message):
 async def list_groups(event: Union[types.Message, types.CallbackQuery]):
     response = await divide_event_request('get_groups', message=event, json={'telegram_id': int(event.from_user.id)})
     groups = response['groups']
-    if groups:
-        answer_response_text = '\n'.join([f"{group['name']}" for group in groups[:5]])
-        response_text = "Ваши группы задач:\n"
-        response_text += '\n'.join([f"{group['id']}. {group['name']}" for group in groups])
-        await event.answer(answer_response_text)
-        await event.message.answer(
-            parse_mode=ParseMode.HTML,
-            text=response_text,
-            reply_markup=groups_list_keyboard(groups)
-        )
-    else:
-        await event.answer("No groups found.")
+    await print_groups_list(event, groups)
 
 
 @router.callback_query(lambda call: call.data.startswith('group_'))
 async def list_task(event: types.CallbackQuery, state: FSMContext):
     split_callback_data = event.data.split('_')
     group_id = split_callback_data[1]
-    response = await divide_event_request('get_tasks', message=event, json={'group_id': int(group_id)})
-    tasks = response['tasks']
-    group = response['group']
-    if tasks:
-        answer_response_text = '\n'.join([f"{task['task']}" for task in tasks[:5]])
-        response_text = f"Ваши задачи в группе {group['name']}:\n"
-        response_text += '\n'.join([f"{task['task']} -- {task['done']} -- {task['end_time']}" for task in tasks])
-        await event.answer(text=answer_response_text)
-        await event.message.edit_text(
-            inline_message_id=event.inline_message_id,
-            parse_mode=ParseMode.HTML,
-            text=response_text,
-            reply_markup=tasks_list_keyboard(tasks)
-        )
-        await state.set_state(TaskStates.group)
-        update_data_state = {'group_id': group_id}
-        await state.update_data(update_data_state)
-    else:
-        await event.answer("No tasks found.")
+    await back_to_task_list(event, group_id)
+
+    await state.set_state(TaskStates.main)
+    update_data_state = {'group_id': group_id}
+    await state.update_data(update_data_state)
 
 
 @router.message(Command('done'))
