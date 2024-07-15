@@ -45,7 +45,7 @@ class Task(Base):
     @classmethod
     def get_due_tasks(cls, db):
         now = datetime.datetime.now()
-        return db.query(cls).filter(cls.start_time <= now, cls.done is True).all()
+        return db.query(cls).filter(cls.end_time <= now, cls.done is False).all()
 
 
 def init_db():
@@ -95,10 +95,12 @@ def add_task(db, task, group_id, start_time=None, end_time=None, custom_status=N
     db.refresh(db_task)
     return db_task
 
+
 def get_tasks(db, group_id):
     return (db.query(Task, TaskGroup)
             .join(TaskGroup, TaskGroup.id == Task.group_id)
             .filter(Task.group_id == group_id)
+            .order_by(Task.end_time.desc()).limit(10)
             .all())
 
 

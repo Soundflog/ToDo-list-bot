@@ -23,7 +23,7 @@ def get_or_create_user(db, telegram_id):
 @app.route('/add_group', methods=['POST'])
 def add_group_route():
     data = request.json
-    telegram_id = data['telegram_id']
+    telegram_id = str(data['telegram_id'])
     group_name = data['group_name']
 
     db = next(get_db())
@@ -118,7 +118,7 @@ def tasks_due():
         return jsonify({})
     tasks_due = [
         {
-            'user_id': task.group.user.telegram_id,
+            'user_id': task.main.user.telegram_id,
             'description': task.task
         }
         for task in tasks
@@ -131,7 +131,13 @@ def update_task_status():
     data = request.get_json()
     task_id = data.get('task_id')
     db = next(get_db())
-    task = update_task(db, task_id, done=True)
+    task = update_task(
+        db, task_id,
+        data.get('done'),
+        data.get('start_time'),
+        data.get('end_time'),
+        data.get('custom_status'),
+    )
     if task:
         return jsonify({'status': 'success'})
     else:
