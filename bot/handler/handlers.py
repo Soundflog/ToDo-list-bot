@@ -2,16 +2,15 @@ import os
 from typing import Union
 
 import requests
+from aiogram import types, Router
 from aiogram.enums import ParseMode
-from aiogram.fsm.context import FSMContext
-
-from dotenv import load_dotenv
-from aiogram import types, Router, Bot, F
 from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from dotenv import load_dotenv
 
 from bot.handler.request import divide_event_request
-from bot.handler.usebale_handler import print_tasks_list, print_groups_list, back_to_task_list
-from bot.keyboards import start_keyboard, groups_list_keyboard, tasks_list_keyboard, menu_reply_keyboard
+from bot.handler.usebale_handler import print_groups_list, back_to_task_list
+from bot.keyboards import start_keyboard, menu_reply_keyboard
 from bot.state.Task import TaskStates
 
 load_dotenv()

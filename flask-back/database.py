@@ -80,6 +80,16 @@ def add_group(db, name, user_id):
     return group
 
 
+def update_group(db, group_id, name):
+    group = db.query(TaskGroup).filter(TaskGroup.id == group_id).first()
+    if group:
+        group.name = name
+        db.commit()
+        db.refresh(group)
+        return group
+    return None
+
+
 def get_groups(db, user_id):
     return db.query(TaskGroup).filter(TaskGroup.user_id == user_id).all()
 

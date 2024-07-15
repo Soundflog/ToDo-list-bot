@@ -4,7 +4,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from database import init_db, get_db, get_user, create_user, add_group, get_groups, add_task, get_tasks, update_task, \
-    delete_task, get_group_by_id, Task
+    delete_task, get_group_by_id, Task, update_group
 
 load_dotenv()
 
@@ -31,6 +31,28 @@ def add_group_route():
     group = add_group(db, group_name, user.id)
     return jsonify({'group_id': group.id, 'group_name': group.name})
 
+
+@app.route('/update_group', methods=['POST'])
+def update_group_route():
+    data = request.json
+    group_id = data['group_id']
+    group_name = data['group_name']
+
+    db = next(get_db())
+    group = update_group(db, group_id, group_name)
+    return jsonify({'group_id': group.id, 'group_name': group.name})
+
+@app.route('/delete_group', methods=['POST'])
+def delete_group_route():
+    data = request.json
+    group_id = data['group_id']
+
+    db = next(get_db())
+    group = get_group_by_id(db, group_id)
+    if group:
+        db.session.delete(group)
+        db.session.commit()
+    return jsonify({'success': True})
 
 @app.route('/get_groups', methods=['POST'])
 def get_groups_route():

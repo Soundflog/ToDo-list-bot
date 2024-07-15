@@ -29,7 +29,7 @@ async def main_add_group_handler(event: Union[types.Message, types.CallbackQuery
 
 @router.message(TaskStates.write_group, F.text)
 @router.callback_query(lambda call: call.data.startswith('add_group'))
-async def message_add_group_handler(event: Union[types.Message, types.CallbackQuery], state: TaskStates.write_group, bot: Bot):
+async def message_add_group_handler(event: Union[types.Message, types.CallbackQuery], state: TaskStates.write_group):
     msg = event.text
     pattern = r'^(?P<group>.+?)$'
     match = re.match(pattern, msg.strip())
@@ -55,18 +55,3 @@ async def message_add_group_handler(event: Union[types.Message, types.CallbackQu
         await event.answer("Неправильно заданы данные")
     await state.clear()
 
-
-# Вызывается при edit group
-@router.message(F.in_("Редактировать группу"), StateFilter(TaskStates.main))
-@router.callback_query(lambda call: call.data.startswith('edit_group'), TaskStates.main)
-async def main_edit_group_handler(event: Union[types.Message, types.CallbackQuery], state: TaskStates.main):
-    await event.message.edit_reply_markup()
-    await event.message.answer(
-        parse_mode=ParseMode.HTML,
-        text="Please provide a group name for the tasks.\n"
-             "Example:\n"
-             "Edit group name группа"
-    )
-    await state.set_state(TaskStates.edit_group)
-
-# Вызывается при delete group
