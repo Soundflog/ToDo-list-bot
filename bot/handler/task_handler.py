@@ -8,7 +8,7 @@ from aiogram.enums import ParseMode
 from aiogram.filters import StateFilter
 
 from bot.handler.request import divide_event_request
-from bot.handler.usebale_handler import back_to_task_list
+from bot.handler.usebale_handler import back_to_task_list, list_upcoming_tasks
 from bot.keyboards import tasks_list_keyboard
 from bot.state.Task import TaskStates
 
@@ -16,16 +16,19 @@ router = Router()
 
 
 # Message "Add Task"
-@router.message(F.text.lower() == "создать задачу", StateFilter(None))
+@router.message(F.text.lower() == "💡создать задачу", StateFilter(None))
 async def main_msg_add_task_handler(event: types.Message, state: TaskStates.main):
     await event.answer(
         parse_mode=ParseMode.HTML,
-        text="Please provide a task description and time.\n"
-             "Example:\n"
-             "New_task, 20.08 15:00, status"
+        text="Пожалуйста, напишите название и время задачи. Можно указать статус.\n"
+             "Пример:\n"
+             "Новая задача, 20.08 10:15, статус"
     )
     user_data_from_state_group = await state.get_data()
-    group_id = user_data_from_state_group['group_id']
+    if user_data_from_state_group.get('group_id') is not None and user_data_from_state_group['group_id'] is not None:
+        group_id = user_data_from_state_group['group_id']
+    else:
+        group_id = 0
     await state.set_state(TaskStates.write_task)
     await state.update_data({'group_id': group_id})
 
@@ -36,9 +39,9 @@ async def main_add_task_handler(event: types.CallbackQuery, state: TaskStates.ma
     await event.message.edit_reply_markup()
     await event.message.answer(
         parse_mode=ParseMode.HTML,
-        text="Please provide a task description and time.\n"
-             "Example:\n"
-             "New_task, 20.08 15:00, status"
+        text="Пожалуйста, напишите название и время задачи. Можно указать статус.\n"
+             "Пример:\n"
+             "Новая задача, 20.08 10:15, статус"
     )
     user_data_from_state_group = await state.get_data()
     group_id = user_data_from_state_group['group_id']
@@ -76,16 +79,17 @@ async def message_add_task_handler(message: types.Message, state: TaskStates.wri
         }
         response = await divide_event_request('add_task', message, json)
         task_name_added = response['task']
+        group_name = response['group']['name']
+        group_id = response['group']['id']
         await message.reply(
-            f"Task '{task_name_added}' added!",
+            f"Task '{task_name_added}' added!\n\n"
+            f"<i>Группа {group_name}</i>",
             parse_mode=ParseMode.HTML
         )
         # Back to task-list
         await back_to_task_list(message, group_id, False)
 
         await state.set_state(TaskStates.main)
-        update_data_state = {'group_id': group_id}
-        await state.update_data(update_data_state)
     else:
         await message.answer("Неправильно заданы данные")
 
@@ -100,3 +104,8 @@ async def menu_tasks_handler(event: types.CallbackQuery, state: TaskStates.main)
     await event.message.edit_reply_markup(
         reply_markup=tasks_list_keyboard(tasks)
     )
+
+
+@router.message(F.text.lower() == '🎯список предстоящих задач')
+async def upcoming_tasks_handler(message: types.Message):
+    await list_upcoming_tasks(message)
