@@ -23,8 +23,8 @@ def start_keyboard():
 def menu_reply_keyboard():
     replyKeyboard = ReplyKeyboardBuilder()
     replyKeyboard.row(
-        KeyboardButton(text=f"Создать задачу"),
-        KeyboardButton(text=f"Список предстоящих задач"),
+        KeyboardButton(text=f"💡Создать задачу"),
+        KeyboardButton(text=f"🎯Список предстоящих задач"),
     )
     return replyKeyboard.as_markup()
 
@@ -37,7 +37,7 @@ def groups_list_keyboard(groups_list: list):
         )
     keyboard.adjust(1)
     keyboard.add(
-        InlineKeyboardButton(text=f"Добавить группу", callback_data=f"add_group")
+        InlineKeyboardButton(text=f"🆕Добавить группу", callback_data=f"add_group")
     )
     return keyboard.as_markup()
 
@@ -50,18 +50,18 @@ def tasks_list_keyboard(tasks_list: list):
                 InlineKeyboardButton(text=f"{task['task']}", callback_data=f"task_{task['id']}"),
             )
     keyboard.add(
-        InlineKeyboardButton(text=f"Создать задачу", callback_data=f"add_task"),
-        InlineKeyboardButton(text=f"Назад", callback_data=f"groups_list")).adjust(2)
+        InlineKeyboardButton(text=f"💡Создать задачу", callback_data=f"add_task"),
+        InlineKeyboardButton(text=f"↩Назад", callback_data=f"groups_list")).adjust(2)
     return keyboard.as_markup()
 
 
 def tasks_menu_keyboard():
     keyboard = InlineKeyboardBuilder()
     keyboard.add(
-        InlineKeyboardButton(text=f"Меню задач", callback_data=f"menu_tasks"),
-        InlineKeyboardButton(text=f"Изменить группу", callback_data=f"edit_group"),
-        InlineKeyboardButton(text=f"Удалить группу", callback_data=f"delete_group"),
-        InlineKeyboardButton(text=f"Назад", callback_data=f"groups_list")
+        InlineKeyboardButton(text=f"📖Меню задач", callback_data=f"menu_tasks"),
+        InlineKeyboardButton(text=f"🛠️Изменить группу", callback_data=f"edit_group"),
+        InlineKeyboardButton(text=f"❌Удалить группу", callback_data=f"delete_group"),
+        InlineKeyboardButton(text=f"↩ Назад", callback_data=f"groups_list")
     )
     keyboard.adjust(2)
     return keyboard.as_markup()
