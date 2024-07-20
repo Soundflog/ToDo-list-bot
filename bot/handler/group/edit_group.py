@@ -55,14 +55,3 @@ async def message_edit_group_handler(event: Union[types.Message, types.CallbackQ
     await print_groups_list(event, groups)
     await state.clear()
 
-
-@router.callback_query(lambda call: call.data.startswith('delete_group'), TaskStates.main)
-async def message_edit_group_handler(event: Union[types.Message, types.CallbackQuery], state: TaskStates.main):
-    json = {'telegram_id': event.from_user.id, 'group_id': event.data.split('delete_group')}
-    response_status = await divide_event_request('delete_group', event, json=json)
-    if response_status['success']:
-        await event.answer(f"Успешно удалена группа")
-    else:
-        await event.answer(f"Ошибка удаления группы")
-
-
