@@ -4,7 +4,13 @@ from aiogram import types
 from aiogram.enums import ParseMode
 
 from bot.handler.request import divide_event_request
-from bot.keyboards import groups_list_keyboard, tasks_list_keyboard, tasks_menu_keyboard
+from bot.keyboards import groups_list_keyboard, tasks_list_keyboard, tasks_menu_keyboard, empty_group_list
+
+
+async def back_to_group_list(event: Union[types.Message, types.CallbackQuery]):
+    response = await divide_event_request('get_groups', message=event, json={'telegram_id': event.from_user.id})
+    groups = response['groups']
+    await print_groups_list(event, groups)
 
 
 async def back_to_task_list(event: Union[types.Message, types.CallbackQuery], group_id, is_edit_text=True):
@@ -46,7 +52,8 @@ async def print_groups_list(event: Union[types.Message, types.CallbackQuery], gr
                 reply_markup=groups_list_keyboard(groups)
             )
     else:
-        await event.answer("No groups found.")
+        await event.answer("Групп задач не найдено\nПожалуйста, создайте новую группу",
+                           reply_markup=empty_group_list())
 
 
 async def print_tasks_list(event: Union[types.Message, types.CallbackQuery], tasks, group, is_edit_text=True):

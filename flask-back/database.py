@@ -93,9 +93,7 @@ def update_group(db, group_id, name):
 def get_groups(db, user_id):
     now = datetime.datetime.now()
     return (db.query(TaskGroup)
-            .join(Task, TaskGroup.id == Task.group_id)
-            .filter(TaskGroup.user_id == user_id).order_by(Task.end_time.desc())
-            .all())
+            .filter(TaskGroup.user_id == user_id).all())
 
 
 def get_group_by_id(db, group_id):

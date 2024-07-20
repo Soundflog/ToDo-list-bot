@@ -9,7 +9,7 @@ from aiogram.filters import StateFilter
 
 from bot.handler.request import divide_event_request
 from bot.handler.usebale_handler import back_to_task_list, list_upcoming_tasks
-from bot.keyboards import tasks_list_keyboard
+from bot.keyboards import tasks_list_keyboard, cancel_keyboard
 from bot.state.Task import TaskStates
 
 router = Router()
@@ -41,7 +41,8 @@ async def main_add_task_handler(event: types.CallbackQuery, state: TaskStates.ma
         parse_mode=ParseMode.HTML,
         text="Пожалуйста, напишите название и время задачи. Можно указать статус.\n"
              "Пример:\n"
-             "Новая задача, 20.08 10:15, статус"
+             "Новая задача, 20.08 10:15, статус",
+        reply_markup=cancel_keyboard()
     )
     user_data_from_state_group = await state.get_data()
     group_id = user_data_from_state_group['group_id']
@@ -92,6 +93,19 @@ async def message_add_task_handler(message: types.Message, state: TaskStates.wri
         await state.set_state(TaskStates.main)
     else:
         await message.answer("Неправильно заданы данные")
+
+
+# Cancel Task
+@router.callback_query(lambda call: call.data.startswith('cancel'), TaskStates.write_task)
+async def cancel_handler(event: types.CallbackQuery, state: TaskStates.write_task):
+    await event.message.edit_reply_markup()
+    await event.message.answer('Отменить')
+    # Back to task-list
+    user_data_from_state_group = await state.get_data()
+    group_id = user_data_from_state_group['group_id']
+    await back_to_task_list(event, group_id, True)
+
+    await state.set_state(TaskStates.main)
 
 
 # ------------------- Menu Tasks -------------------

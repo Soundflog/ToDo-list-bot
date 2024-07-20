@@ -64,10 +64,19 @@ def get_groups_route():
     db = next(get_db())
     user = get_or_create_user(db, telegram_id)
     groups = get_groups(db, user.id)
-    if groups is None or len(groups) == 0:
-        add_group(db, "Новая группа", user.id)
-    groups = get_groups(db, user.id)
     return jsonify({'groups': [{'id': group.id, 'name': group.name} for group in groups]})
+
+
+@app.route('/get_group_by_id', methods=['POST'])
+def get_group_by_id_route():
+    data = request.json
+    group_id = str(data['group_id'])
+
+    db = next(get_db())
+    group = get_group_by_id(db, group_id)
+    if group is None:
+        return jsonify({'success': False})
+    return jsonify({'group': {'id': group.id, 'name': group.name}})
 
 
 @app.route('/add_task', methods=['POST'])

@@ -8,8 +8,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from dotenv import load_dotenv
 
-from bot.handler.request import divide_event_request
-from bot.handler.usebale_handler import print_groups_list, back_to_task_list
+from bot.handler.usebale_handler import back_to_task_list, back_to_group_list
 from bot.keyboards import start_keyboard, menu_reply_keyboard
 from bot.state.Task import TaskStates
 
@@ -38,9 +37,7 @@ async def send_welcome(message: types.Message):
 @router.message(Command('list'))
 @router.callback_query(lambda call: call.data.startswith('groups_list'))
 async def list_groups(event: Union[types.Message, types.CallbackQuery]):
-    response = await divide_event_request('get_groups', message=event, json={'telegram_id': int(event.from_user.id)})
-    groups = response['groups']
-    await print_groups_list(event, groups)
+    await back_to_group_list(event)
 
 
 @router.callback_query(lambda call: call.data.startswith('group_'))
@@ -54,6 +51,7 @@ async def list_task(event: types.CallbackQuery, state: FSMContext):
     await state.update_data(update_data_state)
 
 
+# TODO: LATER
 @router.message(Command('done'))
 async def mark_done(message: types.Message):
     task_id = message.get_args()
@@ -68,15 +66,3 @@ async def mark_done(message: types.Message):
         await message.reply("Please provide a valid task ID.")
 
 
-@router.message(Command('delete'))
-async def delete_task_handler(message: types.Message):
-    task_id = message.get_args()
-    if task_id.isdigit():
-        response = requests.post(f'{FLASK_URL}/delete_task',
-                                 json={'telegram_id': message.from_user.id, 'task_id': int(task_id)})
-        if response.status_code == 200:
-            await message.reply(f"Task {task_id} deleted!")
-        else:
-            await message.reply("Error deleting task.")
-    else:
-        await message.reply("Please provide a valid task ID.")

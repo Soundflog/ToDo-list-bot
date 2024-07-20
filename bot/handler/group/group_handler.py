@@ -8,10 +8,12 @@ from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 
 from bot.handler.request import divide_event_request
-from bot.handler.usebale_handler import print_groups_list
+from bot.handler.usebale_handler import print_groups_list, back_to_group_list
+from bot.keyboards import cancel_keyboard
 from bot.state.Task import TaskStates
 
 router = Router()
+
 
 # Вызывается при создании новой group
 @router.message(F.in_("Создать группу"), StateFilter(None))
@@ -20,9 +22,9 @@ async def main_add_group_handler(event: Union[types.Message, types.CallbackQuery
     await event.message.edit_reply_markup()
     await event.message.answer(
         parse_mode=ParseMode.HTML,
-        text="Please provide a group name for the tasks.\n"
-             "Example:\n"
-             "Group name группа"
+        text="Пожалуйста, напишите название группы для задач.\n"
+             "<i>Пример:\nГруппа задач</i>",
+        reply_markup=cancel_keyboard()
     )
     await state.set_state(TaskStates.write_group)
 
@@ -55,3 +57,11 @@ async def message_add_group_handler(event: Union[types.Message, types.CallbackQu
         await event.answer("Неправильно заданы данные")
     await state.clear()
 
+
+@router.callback_query(lambda call: call.data.startswith('cancel'), TaskStates.write_group)
+async def cancel_handler(event: types.CallbackQuery, state: TaskStates.write_group):
+    await event.message.edit_reply_markup()
+    await event.message.answer('Отменить')
+    # Back to group-list
+    await back_to_group_list(event)
+    await state.set_state(TaskStates.main)

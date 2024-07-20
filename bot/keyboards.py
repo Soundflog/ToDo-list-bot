@@ -8,7 +8,7 @@ def start_keyboard():
     keyboard = InlineKeyboardBuilder()
     keyboard.add(
         # InlineKeyboardButton(text="Open To-Do List", web_app=WebAppInfo(url=webapp_url))
-        InlineKeyboardButton(text="Перейти", callback_data='groups_list'),
+        InlineKeyboardButton(text="🚀Перейти к списку задач", callback_data='groups_list'),
         InlineKeyboardButton(text="Coming soon...", callback_data='____'),
     )
     keyboard.adjust(1)
@@ -42,6 +42,14 @@ def groups_list_keyboard(groups_list: list):
     return keyboard.as_markup()
 
 
+def empty_group_list():
+    keyboard = InlineKeyboardBuilder()
+    keyboard.add(
+        InlineKeyboardButton(text=f"🆕Добавить группу", callback_data=f"add_group")
+    )
+    return keyboard.as_markup()
+
+
 def tasks_list_keyboard(tasks_list: list):
     keyboard = InlineKeyboardBuilder()
     for task in tasks_list:
@@ -64,4 +72,23 @@ def tasks_menu_keyboard():
         InlineKeyboardButton(text=f"↩ Назад", callback_data=f"groups_list")
     )
     keyboard.adjust(2)
+    return keyboard.as_markup()
+
+
+def confirm_delete_keyboard():
+    keyboard = InlineKeyboardBuilder()
+    keyboard.add(
+        InlineKeyboardButton(text=f"✔️Подвердить удаление", callback_data=f"confirm_delete_group"),
+        InlineKeyboardButton(text=f"🔴Отменить", callback_data=f"groups_list")
+    )
+    keyboard.adjust(1)
+    return keyboard.as_markup()
+
+
+def cancel_keyboard():
+    keyboard = InlineKeyboardBuilder()
+    keyboard.add(
+        InlineKeyboardButton(text=f"🔴Отменить", callback_data=f"cancel"),
+    )
+    keyboard.adjust(1)
     return keyboard.as_markup()
