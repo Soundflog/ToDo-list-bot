@@ -10,7 +10,8 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-from bot.handler import handlers, task_handler, group_handler
+from bot.handler import handlers, task_handler
+from bot.handler.group import group_handler, delete_group, edit_group
 
 load_dotenv()
 FLASK_URL = os.getenv("FLASK_URL")
@@ -26,7 +27,7 @@ async def check_and_notify(bot: Bot):
                 user_id = task['user_id']
                 task_description = task['description']
                 task_id = task['task_id']
-                await bot.send_message(user_id, f"Task '{task_description}' is due!")
+                await bot.send_message(user_id, f"📢🔔Task '{task_description}' is due!✅")
                 # Mark the task as done
                 requests.post(f'{FLASK_URL}/update_task', json={'task_id': task_id, 'done': True})
 
@@ -44,6 +45,8 @@ async def main():
     dp.include_router(handlers.router)
     dp.include_router(task_handler.router)
     dp.include_router(group_handler.router)
+    dp.include_router(edit_group.router)
+    dp.include_router(delete_group.router)
     # сюда импортируйте ваш собственный роутер
     # dp.message.middleware(ThrottlingMiddleware())
     try:
