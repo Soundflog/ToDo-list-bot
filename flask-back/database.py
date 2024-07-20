@@ -91,7 +91,11 @@ def update_group(db, group_id, name):
 
 
 def get_groups(db, user_id):
-    return db.query(TaskGroup).filter(TaskGroup.user_id == user_id).all()
+    now = datetime.datetime.now()
+    return (db.query(TaskGroup)
+            .join(Task, TaskGroup.id == Task.group_id)
+            .filter(TaskGroup.user_id == user_id).order_by(Task.end_time.desc())
+            .all())
 
 
 def get_group_by_id(db, group_id):
@@ -106,10 +110,10 @@ def add_task(db, task, group_id, start_time=None, end_time=None, custom_status=N
     return db_task
 
 
-def get_tasks(db, group_id):
+def get_tasks(db, group_id, filter):
     return (db.query(Task, TaskGroup)
             .join(TaskGroup, TaskGroup.id == Task.group_id)
-            .filter(Task.group_id == group_id)
+            .filter(Task.group_id == group_id, Task.done == False)
             .order_by(Task.end_time.desc()).limit(10)
             .all())
 
@@ -136,3 +140,11 @@ def delete_task(db, task_id, group_id):
         db.delete(db_task)
         db.commit()
     return db_task
+
+
+def get_task_by_id(db, telegram_id):
+    now = datetime.datetime.now()
+    return (db.query(Task)
+            .join(Task.group)
+            .join(TaskGroup.user)
+            .filter(User.telegram_id == telegram_id, Task.start_time > now, Task.done is False).all())

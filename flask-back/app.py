@@ -4,7 +4,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from database import init_db, get_db, get_user, create_user, add_group, get_groups, add_task, get_tasks, update_task, \
-    delete_task, get_group_by_id, Task, update_group
+    delete_task, get_group_by_id, Task, update_group, TaskGroup, User, get_task_by_id
 
 load_dotenv()
 
@@ -42,6 +42,7 @@ def update_group_route():
     group = update_group(db, group_id, group_name)
     return jsonify({'group_id': group.id, 'group_name': group.name})
 
+
 @app.route('/delete_group', methods=['POST'])
 def delete_group_route():
     data = request.json
@@ -50,9 +51,10 @@ def delete_group_route():
     db = next(get_db())
     group = get_group_by_id(db, group_id)
     if group:
-        db.session.delete(group)
-        db.session.commit()
+        db.delete(group)
+        db.commit()
     return jsonify({'success': True})
+
 
 @app.route('/get_groups', methods=['POST'])
 def get_groups_route():
@@ -72,6 +74,7 @@ def get_groups_route():
 def add_task_route():
     data = request.json
     group_id = data['group_id']
+    telegram_id = data['telegram_id']
     task_text = data['task']
     start_time = data.get('start_time')
     end_time = data.get('end_time')
@@ -86,9 +89,25 @@ def add_task_route():
     if start_time < datetime.now():
         raise ValueError('Start time must be in the future')
     db = next(get_db())
+
+    user = get_or_create_user(db, str(telegram_id))
+
+    if int(group_id) <= 0:
+        groups = get_groups(db, user.id)
+        if groups is None or len(groups) == 0:
+            group_name = "Новая группа"
+            new_group = add_group(db, group_name, user.id)
+            print(f'НоваяGroup id :{new_group.id}')
+            group_id = new_group.id
+        else:
+            group_id = groups[0].id
+            group_name = groups[0].name
+    else:
+        group_name = get_group_by_id(db, group_id).name
+    print(f'Group id :{group_id}', f'Group name :{group_name}')
     task = add_task(db, task_text, group_id, start_time, end_time, custom_status)
     return jsonify({'task': task.task, 'done': task.done, 'start_time': task.start_time, 'end_time': task.end_time,
-                    'custom_status': task.custom_status})
+                    'custom_status': task.custom_status, 'group': {'name': group_name, 'id': group_id}})
 
 
 @app.route('/get_tasks', methods=['POST'])
@@ -98,10 +117,10 @@ def get_tasks_route():
 
     db = next(get_db())
     group = get_group_by_id(db, group_id)
-    tasks = get_tasks(db, group_id)
+    tasks = get_tasks(db, group_id, None)
     if tasks is None or len(tasks) == 0:
         add_task(db, "Новая задача", group_id)
-        tasks = get_tasks(db, group_id)
+        tasks = get_tasks(db, group_id, None)
     json_tasks = [{'id': task.id, 'task': task.task, 'done': task.done,
                    'start_time': task.start_time, 'end_time': task.end_time,
                    'custom_status': task.custom_status, 'group': group.name
@@ -141,10 +160,12 @@ def tasks_due():
     tasks_due = [
         {
             'user_id': task.main.user.telegram_id,
-            'description': task.task
+            'description': task.task,
+            'task_id': task.id
         }
         for task in tasks
     ]
+    print(tasks_due)
     return jsonify(tasks_due)
 
 
@@ -164,6 +185,22 @@ def update_task_status():
         return jsonify({'status': 'success'})
     else:
         return jsonify({'status': 'failure', 'message': 'Task not found'}), 404
+
+
+@app.route('/upcoming_tasks/<string:telegram_id>', methods=['GET'])
+def upcoming_tasks(telegram_id):
+    db = next(get_db())
+    tasks = get_task_by_id(db, telegram_id)
+    upcoming_tasks = [
+        {
+            'task': task.task,
+            'custom_status': task.custom_status,
+            'start_time': task.start_time,
+            'end_time': task.end_time
+        }
+        for task in tasks
+    ]
+    return jsonify(upcoming_tasks)
 
 
 if __name__ == '__main__':
