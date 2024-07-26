@@ -1,14 +1,12 @@
-import re
 from typing import Union
 
-from aiogram import F, Bot
+from aiogram import F
 from aiogram import types, Router
 from aiogram.enums import ParseMode
-from aiogram.filters import StateFilter
-from aiogram.fsm.context import FSMContext
 
-from bot.handler.request import divide_event_request
-from bot.handler.usebale_handler import print_groups_list
+from bot.handler.usebale.back_to import back_to_group_list
+from bot.handler.usebale.request import divide_event_request
+from bot.handler.usebale.stringfy_printer import print_groups_list
 from bot.state.Task import TaskStates
 
 router = Router()
@@ -48,10 +46,6 @@ async def message_edit_group_handler(event: Union[types.Message, types.CallbackQ
         parse_mode=ParseMode.HTML
     )
     # Back to group-list
-    response2 = await divide_event_request('get_groups', message=event,
-                                           json={'telegram_id': int(event.from_user.id)})
-    groups = response2['groups']
-
-    await print_groups_list(event, groups)
+    await back_to_group_list(event)
     await state.clear()
 

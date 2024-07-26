@@ -1,8 +1,8 @@
 from aiogram import types, Router
 from aiogram.enums import ParseMode
 
-from bot.handler.request import divide_event_request
-from bot.handler.usebale_handler import back_to_group_list
+from bot.handler.usebale.back_to import back_to_group_list
+from bot.handler.usebale.request import divide_event_request
 from bot.keyboards import confirm_delete_keyboard
 from bot.state.Task import TaskStates
 
