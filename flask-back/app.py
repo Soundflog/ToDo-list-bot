@@ -53,6 +53,7 @@ def delete_group_route():
     if group:
         db.delete(group)
         db.commit()
+    db.close()
     return jsonify({'success': True})
 
 
@@ -64,6 +65,7 @@ def get_groups_route():
     db = next(get_db())
     user = get_or_create_user(db, telegram_id)
     groups = get_groups(db, user.id)
+    db.close()
     return jsonify({'groups': [{'id': group.id, 'name': group.name} for group in groups]})
 
 
@@ -76,6 +78,7 @@ def get_group_by_id_route():
     group = get_group_by_id(db, group_id)
     if group is None:
         return jsonify({'success': False})
+    db.close()
     return jsonify({'group': {'id': group.id, 'name': group.name}})
 
 
@@ -127,9 +130,6 @@ def get_tasks_route():
     db = next(get_db())
     group = get_group_by_id(db, group_id)
     tasks = get_tasks(db, group_id, None)
-    if tasks is None or len(tasks) == 0:
-        add_task(db, "Новая задача", group_id)
-        tasks = get_tasks(db, group_id, None)
     json_tasks = [{'id': task.id, 'task': task.task, 'done': task.done,
                    'start_time': task.start_time, 'end_time': task.end_time,
                    'custom_status': task.custom_status, 'group': group.name
@@ -185,10 +185,10 @@ def update_task_status():
     db = next(get_db())
     task = update_task(
         db, task_id,
-        data.get('done'),
-        data.get('start_time'),
-        data.get('end_time'),
-        data.get('custom_status'),
+        done=data.get('done'),
+        start_time=data.get('start_time'),
+        end_time=data.get('end_time'),
+        custom_status=data.get('custom_status'),
     )
     if task:
         return jsonify({'status': 'success'})
@@ -210,6 +210,46 @@ def upcoming_tasks(telegram_id):
         for task in tasks
     ]
     return jsonify(upcoming_tasks)
+
+
+@app.route('/tasks_status/<string:telegram_id>/<string:status>', methods=['GET'])
+def tasks_status(telegram_id, status):
+    db = next(get_db())
+    now = datetime.now()
+
+    if status == "upcoming":
+        tasks = (db.query(Task).join(Task.group).join(TaskGroup.user)
+                 .filter(
+            User.telegram_id == telegram_id,
+            Task.start_time > now,
+            Task.done is False,
+            Task.end_time > now,
+        ).all())
+    elif status == "completed":
+        tasks = (db.query(Task).join(Task.group).join(TaskGroup.user)
+                 .filter(
+            User.telegram_id == telegram_id,
+            Task.done is True,
+            Task.end_time < now,
+        ).all())
+    elif status == "all":
+        tasks = (db.query(Task).join(Task.group).join(TaskGroup.user)
+                 .filter(
+            User.telegram_id == telegram_id
+        ).all())
+    else:
+        return jsonify({'error': 'Invalid status'}), 400
+
+    task_list = [
+        {
+            'task': task.task,
+            'custom_status': task.custom_status,
+            'start_time': task.start_time,
+            'end_time': task.end_time
+        }
+        for task in tasks
+    ]
+    return jsonify(task_list)
 
 
 if __name__ == '__main__':

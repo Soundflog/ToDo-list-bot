@@ -8,7 +8,7 @@ load_dotenv()
 FLASK_URL = os.getenv("FLASK_URL")
 
 
-async def divide_event_request(request: str, message: Union[types.Message, types.CallbackQuery], json: dict,
+async def divide_event_request(request: str, message: Union[types.Message, types.CallbackQuery], json={},
                                method='POST'):
     if method == 'POST':
         response = requests.post(f'{FLASK_URL}/{request}', json=json)

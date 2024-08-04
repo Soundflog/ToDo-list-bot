@@ -44,10 +44,10 @@ async def list_groups(event: Union[types.Message, types.CallbackQuery]):
 async def list_task(event: types.CallbackQuery, state: FSMContext):
     split_callback_data = event.data.split('_')
     group_id = split_callback_data[1]
-    await back_to_task_list(event, group_id)
+    group = await back_to_task_list(event, group_id)
 
     await state.set_state(TaskStates.main)
-    update_data_state = {'group_id': group_id}
+    update_data_state = {'group_id': group_id, 'group_name': group['name']}
     await state.update_data(update_data_state)
 
 

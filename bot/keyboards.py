@@ -50,6 +50,17 @@ def empty_group_list():
     return keyboard.as_markup()
 
 
+def tasks_change_keyboard(status_index: int, status: str):
+    keyboard = InlineKeyboardBuilder()
+    keyboard.add(
+        InlineKeyboardButton(text='<<', callback_data=f"next_{status_index}"),
+        InlineKeyboardButton(text=status, callback_data='status_button'),
+        InlineKeyboardButton(text='>>', callback_data=f"prev_{status_index}"),
+    )
+    keyboard.adjust(3)
+    return keyboard.as_markup()
+
+
 def tasks_list_keyboard(tasks_list: list):
     keyboard = InlineKeyboardBuilder()
     for task in tasks_list:
